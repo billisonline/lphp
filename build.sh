@@ -36,3 +36,5 @@ cp ./build/buildroot/bin/php ./build/output/php-macos
 chmod +x ./build/output/php-macos
 
 ./build/output/php-macos -v
+
+(cd ./build/output && zip -9 php-macos.zip php-macos)

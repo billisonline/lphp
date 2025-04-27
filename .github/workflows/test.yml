@@ -23,6 +23,6 @@ jobs:
         run: ./build.sh
       
       - name: Create release
-        run: gh release --repo ${{ github.repository }} create 0.01 ./build/output/php-macos
+        run: gh release --repo ${{ github.repository }} create 0.02 ./build/output/php-macos.zip
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
