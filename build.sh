@@ -7,7 +7,9 @@ EXTENSIONS="apcu,bcmath,calendar,ctype,curl,dba,dom,exif,fileinfo,filter,gd,icon
 SPC_URL="https://github.com/crazywhalecc/static-php-cli/releases/download/2.5.2/spc-macos-aarch64.tar.gz"
 
 # Special cmake cask to install 3.31.6, the latest version to be supported by spc
-brew install -s ./cmake.rb
+#brew install -s ./cmake.rb
+
+brew install autoconf
 
 mkdir -p build/output
 
@@ -23,4 +25,8 @@ tar -xvzf spc.tar.gz
 
 ./spc build --debug --build-cli --with-suggested-libs --with-suggested-exts "$EXTENSIONS"
 
-cp ./build/buildroot/bin/php ./build/output/php
+cp ./build/buildroot/bin/php ./build/output/php-macos
+
+chmod +x ./build/output/php-macos
+
+./build/output/php-macos -v
