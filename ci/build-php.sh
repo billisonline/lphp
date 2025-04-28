@@ -28,7 +28,12 @@ curl -Lo spc.tar.gz "$SPC_URL"
 
 tar -xvzf spc.tar.gz
 
-./spc download "--with-php=$VERSION" --for-extensions "$EXTENSIONS" --prefer-pre-built
+run-spc-download() {
+    ./spc download --shallow-clone "--with-php=$VERSION" --for-extensions "$EXTENSIONS" --prefer-pre-built
+}
+
+# Retry the downloads with exponential backoff bc there are often transient failures.
+run-spc-download || (sleep 120 && run-spc-download) || (sleep 240 && run-spc-download) || (sleep 480 && run-spc-download)
 
 ./spc spc-config --with-suggested-libs --with-suggested-exts "$EXTENSIONS"
 
@@ -40,6 +45,6 @@ cp ./build/buildroot/bin/php ./build/output/php
 
 chmod +x ./build/output/php
 
-./build/output/php-macos -v
+./build/output/php -v
 
 (cd ./build/output && zip -9 php-macos.zip php)

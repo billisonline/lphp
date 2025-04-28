@@ -22,6 +22,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Delete release if it already exists
+        run: |
+          gh release list --json tagName -q '.[] | .tagName' | grep -xqF ${{ env.RELEASE }} \
+            && gh release delete ${{ env.RELEASE }} \
+            || echo "No existing release ${{ env.RELEASE }}"
+
       - name: Create release
         run: gh release create ${{ env.RELEASE }}
 
