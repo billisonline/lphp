@@ -1,0 +1,15 @@
+#!/bin/bash
+
+RELEASE="__CURRENT_RELEASE__"
+RELEASE_BASE_URL="https://github.com/billisonline/lphp/releases/download/${RELEASE}"
+
+LPHP_FILENAME="lphp"
+LPHP_URL="${RELEASE_BASE_URL}/${LPHP_FILENAME}"
+
+rm -f "$LPHP_FILENAME"
+
+curl -sL "$LPHP_URL" > "$LPHP_FILENAME"
+
+chmod +x "$LPHP_FILENAME"
+
+"$LPHP_FILENAME" m:init
