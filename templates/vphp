@@ -3,12 +3,12 @@
 set -e
 
 RELEASE="__CURRENT_RELEASE__"
-RELEASE_BASE_URL="https://github.com/billisonline/lphp/releases/download/${RELEASE}"
+RELEASE_BASE_URL="https://github.com/billisonline/vphp/releases/download/${RELEASE}"
 
-LPHP_BIN_DIR="./vendor/bin/lphp"
+VPHP_BIN_DIR="./vendor/bin/vphp"
 
-PHP_BIN_PATH="${LPHP_BIN_DIR}/php"
-COMPOSER_BIN_PATH="${LPHP_BIN_DIR}/composer.phar"
+PHP_BIN_PATH="${VPHP_BIN_DIR}/php"
+COMPOSER_BIN_PATH="${VPHP_BIN_DIR}/composer.phar"
 
 install-composer-if-not-installed() {
     local COMPOSER_PHAR_URL="https://getcomposer.org/download/2.8.8/composer.phar"
@@ -16,10 +16,10 @@ install-composer-if-not-installed() {
     local COMPOSER_SHA256="957263e284b9f7a13d7f475dc65f3614d151b0c4dcc7e8761f7e7f749447fb68"
 
     if [ ! -f "$COMPOSER_BIN_PATH" ]; then
-        mkdir -p "$LPHP_BIN_DIR"
+        mkdir -p "$VPHP_BIN_DIR"
 
         (
-            cd "$LPHP_BIN_DIR"
+            cd "$VPHP_BIN_DIR"
 
             curl -sL "$COMPOSER_PHAR_URL" > "$COMPOSER_PHAR_FILENAME"
 
@@ -34,13 +34,13 @@ install-composer-if-not-installed() {
 
 install-php-if-not-installed() {
     if [ ! -f "$PHP_BIN_PATH" ]; then
-        mkdir -p "$LPHP_BIN_DIR"
+        mkdir -p "$VPHP_BIN_DIR"
 
         local PHP_ZIP_FILENAME="php-macos.zip"
         local PHP_ZIP_URL="${RELEASE_BASE_URL}/${PHP_ZIP_FILENAME}"
 
         (
-            cd "$LPHP_BIN_DIR"
+            cd "$VPHP_BIN_DIR"
 
             curl -sL "$PHP_ZIP_URL" > "$PHP_ZIP_FILENAME"
 
@@ -53,15 +53,15 @@ install-php-if-not-installed() {
     fi
 }
 
-lphp-meta-init() {
+vphp-meta-init() {
     if [ -f "composer.json" ] && [ ! -f "vendor/autoload.php" ]; then
-        ./lphp composer install
+        ./vphp composer install
     fi
 
     # If this is a fresh Laravel install, initialize the project.
     if [ -f "artisan" ] && [ ! -f ".env" ]; then
-        ./lphp composer run post-root-package-install
-        ./lphp composer run post-create-project-cmd
+        ./vphp composer run post-root-package-install
+        ./vphp composer run post-create-project-cmd
     fi
 }
 
@@ -70,11 +70,11 @@ install-php-if-not-installed
 
 # Auto-init if we're running Laravel Artisan for the fist time.
 if [ "$1" == 'artisan' ] && [ ! -f "vendor/autoload.php" ]; then
-    ./lphp m:init
+    ./vphp m:init
 fi
 
 # Run the meta command if called.
-if [ "$1" == "m:init" ]; then lphp-meta-init; exit 0; fi
+if [ "$1" == "m:init" ]; then vphp-meta-init; exit 0; fi
 
 # Rewrite the first argument if we want to run a composer command.
 if [ "$1" == 'composer' ]; then

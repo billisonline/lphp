@@ -37,10 +37,10 @@ jobs:
       - name: Add PHP for macOS to release
         run: gh release upload ${{ env.RELEASE }} ./build/output/php-macos.zip
 
-      - name: Build LPHP and installer scripts from template
+      - name: Build VPHP and installer scripts from template
         run: |
-          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/lphp > ./build/output/lphp
-          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/lphp-installer > ./build/output/lphp-installer
+          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/vphp > ./build/output/vphp
+          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/vphp-installer > ./build/output/vphp-installer
 
-      - name: Add LPHP and installer scripts to release
-        run: gh release upload ${{ env.RELEASE }} ./build/output/lphp ./build/output/lphp-installer
+      - name: Add VPHP and installer scripts to release
+        run: gh release upload ${{ env.RELEASE }} ./build/output/vphp ./build/output/vphp-installer
