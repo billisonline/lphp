@@ -1,22 +1,82 @@
-name: MacOS build test
+name: Multi-OS Build Test
 
-# Controls when the workflow will run
+env:
+  CACHE_KEY_PHP_SOURCES: spc-2.5.2-php-8.4-sources
+  CACHE_KEY_PHP_BUILDS: spc-2.5.2-php-8.4-builds
+
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  #push:
-  #  branches: [ "main" ]
-  #pull_request:
-  #  branches: [ "main" ]
-
   workflow_dispatch:
 
 jobs:
+  download:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache PHP sources
+        id: cache-php-sources
+        uses: actions/cache@v4
+        with:
+          path: ./build/downloads.zip
+          key: ${{ env.CACHE_KEY_PHP_SOURCES }}
+
+      - if: ${{ steps.cache-php-sources.outputs.cache-hit != 'true' }}
+        name: Download PHP and extension sources
+        run: ./ci/download-sources.sh
+
   build:
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        config:
+          - os_type: macos
+            os_display_name: macOS
+            runner: macos-latest
+          - os_type: linux
+            os_display_name: Linux (glibc)
+            runner: ubuntu-latest
+
+    needs: download
+
+    runs-on: ${{ matrix.config.runner }}
+    permissions:
+      contents: read
+    outputs:
+      php_artifact_name: php-${{ matrix.config.os_type }}.zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download cached PHP sources
+        uses: actions/cache@v4
+        with:
+          path: ./build/downloads.zip
+          key: ${{ env.CACHE_KEY_PHP_SOURCES }}
+
+      - name: Cache PHP build
+        id: cache-php-build
+        uses: actions/cache@v4
+        with:
+          path: ./build/output/php-${{ matrix.config.os_type }}.zip
+          key: ${{ env.CACHE_KEY_PHP_BUILDS }}-${{ matrix.config.os_type }}
+
+      - if: ${{ steps.cache-php-build.outputs.cache-hit != 'true' }}
+        name: Build PHP for ${{ matrix.config.os_display_name }}
+        run: ./ci/build-php-${{ matrix.config.os_type }}.sh
+
+      - name: Archive PHP build for ${{ matrix.config.os_display_name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-${{ matrix.config.os_type }}
+          path: ./build/output/php-${{ matrix.config.os_type }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
-      RELEASE: '0.03'
+      RELEASE: '0.04'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
@@ -31,17 +91,21 @@ jobs:
       - name: Create release
         run: gh release create ${{ env.RELEASE }}
 
-      - name: Build PHP for macOS
-        run: ./ci/build-php.sh
-      
-      - name: Add PHP for macOS to release
-        run: gh release upload ${{ env.RELEASE }} ./build/output/php-macos.zip
+      - name: Download all PHP build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./build/artifacts
+
+      - name: Upload all PHP builds to release
+        run: |
+          gh release upload ${{ env.RELEASE }} ./build/artifacts/**/php-*.zip
 
       - name: Generate installer patch template
         run: ./ci/generate-installer-patch.sh > ./templates/install-vphp.patch
 
       - name: Build VPHP runner, installer, and patch from templates
         run: |
+          mkdir -p ./build/output
           sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/vphp > ./build/output/vphp
           sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/install-vphp > ./build/output/install-vphp
           sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/install-vphp.patch > ./build/output/install-vphp.patch
@@ -52,4 +116,3 @@ jobs:
             ./build/output/vphp \
             ./build/output/install-vphp \
             ./build/output/install-vphp.patch
-            
