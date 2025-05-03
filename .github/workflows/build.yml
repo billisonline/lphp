@@ -1,22 +1,45 @@
-name: MacOS build test
+name: Multi-OS Build Test
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  #push:
-  #  branches: [ "main" ]
-  #pull_request:
-  #  branches: [ "main" ]
-
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        config:
+          - os_type: macos
+            os_display_name: macOS
+            runner: macos-latest
+          - os_type: linux
+            os_display_name: Linux (glibc)
+            runner: ubuntu-latest
+
+    runs-on: ${{ matrix.config.runner }}
+    permissions:
+      contents: read
+    outputs:
+      php_artifact_name: php-${{ matrix.config.os_type }}.zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build PHP for ${{ matrix.config.os_display_name }}
+        run: ./ci/build-php-${{ matrix.config.os_type }}.sh
+
+      - name: Archive PHP build for ${{ matrix.config.os_display_name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-${{ matrix.config.os_type }}
+          path: ./build/output/php-${{ matrix.config.os_type }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
-      RELEASE: '0.03'
+      RELEASE: '0.04'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
@@ -31,11 +54,14 @@ jobs:
       - name: Create release
         run: gh release create ${{ env.RELEASE }}
 
-      - name: Build PHP for macOS
-        run: ./ci/build-php.sh
-      
-      - name: Add PHP for macOS to release
-        run: gh release upload ${{ env.RELEASE }} ./build/output/php-macos.zip
+      - name: Download all PHP build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./build/artifacts
+
+      - name: Upload all PHP builds to release
+        run: |
+          gh release upload ${{ env.RELEASE }} ./build/artifacts/**/php-*.zip
 
       - name: Generate installer patch template
         run: ./ci/generate-installer-patch.sh > ./templates/install-vphp.patch
@@ -52,4 +78,3 @@ jobs:
             ./build/output/vphp \
             ./build/output/install-vphp \
             ./build/output/install-vphp.patch
-            

@@ -32,12 +32,38 @@ install-composer-if-not-installed() {
     fi
 }
 
+throw() {
+    echo "$1"
+    exit 1
+}
+
+OS_LINUX='linux'
+OS_MACOS='macos'
+OS_CURRENT=''
+
+case "$(uname)" in
+    'Linux')
+        OS_CURRENT="$OS_LINUX"
+        ;;
+    'Darwin')
+        OS_CURRENT="$OS_MACOS"
+        ;;
+    *)
+        throw 'Only Linux and macOS are supported.'
+esac
+
 install-php-if-not-installed() {
     if [ ! -f "$PHP_BIN_PATH" ]; then
         mkdir -p "$VPHP_BIN_DIR"
 
-        local PHP_ZIP_FILENAME="php-macos.zip"
+        local PHP_ZIP_FILENAME=''
         local PHP_ZIP_URL="${RELEASE_BASE_URL}/${PHP_ZIP_FILENAME}"
+
+        if  [ "$OS_CURRENT" == "$OS_LINUX" ]; then
+            PHP_ZIP_FILENAME='php-linux.zip'
+        else
+            PHP_ZIP_FILENAME='php-macos.zip'
+        fi
 
         (
             cd "$VPHP_BIN_DIR"

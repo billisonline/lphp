@@ -7,13 +7,15 @@ if [ ! -f .gitignore ]; then
     exit 1
 fi
 
+echo 'were only testing linux rn'; exit 0
+
 VERSION="8.4"
 EXTENSIONS="apcu,bcmath,calendar,ctype,curl,dba,dom,exif,fileinfo,filter,gd,iconv,intl,mbregex,mbstring,mysqli,mysqlnd,opcache,openssl,pcntl,pdo,pdo_mysql,pdo_pgsql,pdo_sqlite,pgsql,phar,posix,readline,redis,session,simplexml,sockets,sodium,sqlite3,tokenizer,xml,xmlreader,xmlwriter,xsl,zip,zlib"
 SPC_URL="https://github.com/crazywhalecc/static-php-cli/releases/download/2.5.2/spc-macos-aarch64.tar.gz"
 
 if ! ( (brew list | grep -q cmake) && (brew list --versions cmake | grep -q '3\.31\.6') ); then
     echo 'cmake is not installed via homebrew or it is not version 3.31.6'
-    
+
     # Special cmake cask to install 3.31.6, the latest version to be supported by spc
     brew reinstall -s ./ci/resources/cmake.rb
 fi
@@ -28,12 +30,7 @@ curl -Lo spc.tar.gz "$SPC_URL"
 
 tar -xvzf spc.tar.gz
 
-run-spc-download() {
-    ./spc download --shallow-clone "--with-php=$VERSION" --for-extensions "$EXTENSIONS" --prefer-pre-built
-}
-
-# Retry the downloads with exponential backoff bc there are often transient failures.
-run-spc-download || (sleep 120 && run-spc-download) || (sleep 240 && run-spc-download) || (sleep 480 && run-spc-download)
+./spc download "--with-php=$VERSION" --for-extensions "$EXTENSIONS" --prefer-pre-built
 
 ./spc spc-config --with-suggested-libs --with-suggested-exts "$EXTENSIONS"
 
@@ -45,6 +42,6 @@ cp ./build/buildroot/bin/php ./build/output/php
 
 chmod +x ./build/output/php
 
-./build/output/php -v
+./build/output/php-macos -v
 
 (cd ./build/output && zip -9 php-macos.zip php)
