@@ -1,0 +1,16 @@
+#!/bin/bash
+
+RELEASE="__CURRENT_RELEASE__"
+RELEASE_BASE_URL="https://github.com/billisonline/phpw/releases/download/${RELEASE}"
+
+PHPW_FILENAME="phpw"
+PHPW_PATH="./${PHPW_FILENAME}"
+PHPW_URL="${RELEASE_BASE_URL}/${PHPW_FILENAME}"
+
+rm -f "$PHPW_PATH"
+
+curl -sL "$PHPW_URL" > "$PHPW_PATH"
+
+chmod +x "$PHPW_PATH"
+
+"$PHPW_PATH" m:init

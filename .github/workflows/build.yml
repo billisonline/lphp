@@ -101,18 +101,18 @@ jobs:
           gh release upload ${{ env.RELEASE }} ./build/artifacts/**/php-*.zip
 
       - name: Generate installer patch template
-        run: ./ci/generate-installer-patch.sh > ./templates/install-vphp.patch
+        run: ./ci/generate-installer-patch.sh > ./templates/install-phpw.patch
 
-      - name: Build VPHP runner, installer, and patch from templates
+      - name: Build PHPW runner, installer, and patch from templates
         run: |
           mkdir -p ./build/output
-          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/vphp > ./build/output/vphp
-          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/install-vphp > ./build/output/install-vphp
-          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/install-vphp.patch > ./build/output/install-vphp.patch
+          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/phpw > ./build/output/phpw
+          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/install-phpw > ./build/output/install-phpw
+          sed "s|__CURRENT_RELEASE__|$RELEASE|g" ./templates/install-phpw.patch > ./build/output/install-phpw.patch
 
-      - name: Add VPHP, installer script, and installer patch to release
+      - name: Add PHPW, installer script, and installer patch to release
         run: |
           gh release upload ${{ env.RELEASE }} \
-            ./build/output/vphp \
-            ./build/output/install-vphp \
-            ./build/output/install-vphp.patch
+            ./build/output/phpw \
+            ./build/output/install-phpw \
+            ./build/output/install-phpw.patch
