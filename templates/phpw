@@ -10,6 +10,8 @@ PHPW_BIN_DIR="./vendor/bin/phpw"
 PHP_BIN_PATH="${PHPW_BIN_DIR}/php"
 COMPOSER_BIN_PATH="${PHPW_BIN_DIR}/composer.phar"
 
+throw() { echo "$1"; exit 1; }
+
 install-composer-if-not-installed() {
     local COMPOSER_PHAR_URL="https://getcomposer.org/download/2.8.8/composer.phar"
     local COMPOSER_PHAR_FILENAME="composer.phar"
@@ -25,17 +27,13 @@ install-composer-if-not-installed() {
 
             if ! (sha256sum "$COMPOSER_PHAR_FILENAME" | grep -q "$COMPOSER_SHA256"); then
                 rm "$COMPOSER_PHAR_FILENAME"
-                echo 'Invalid checksum for composer.phar'
-                exit 1
+
+                throw 'Invalid checksum for composer.phar'
             fi
         )
     fi
 }
 
-throw() {
-    echo "$1"
-    exit 1
-}
 
 OS_LINUX='linux'
 OS_MACOS='macos'
@@ -64,14 +62,23 @@ install-php-if-not-installed() {
             PHP_ZIP_FILENAME='php-macos.zip'
         fi
 
+        local PHP_ZIP_SIGNATURE_FILENAME="${PHP_ZIP_FILENAME}.sig"
+
         local PHP_ZIP_URL="${RELEASE_BASE_URL}/${PHP_ZIP_FILENAME}"
+        local PHP_ZIP_SIGNATURE_URL="${RELEASE_BASE_URL}/${PHP_ZIP_SIGNATURE_FILENAME}"
 
         (
             cd "$PHPW_BIN_DIR"
 
             curl -sL "$PHP_ZIP_URL" > "$PHP_ZIP_FILENAME"
+            curl -sL "$PHP_ZIP_SIGNATURE_URL" > "$PHP_ZIP_SIGNATURE_FILENAME"
 
-            # todo verify signature
+            if (which gpg); then
+                gpg --verify "$PHP_ZIP_SIGNATURE_FILENAME" "$PHP_ZIP_FILENAME" \
+                    || throw "Couldn't verify signature of PHP archive: $PHP_ZIP_FILENAME"
+            fi
+
+            # todo: fallback to hash if gpg not present
 
             unzip "$PHP_ZIP_FILENAME"
 

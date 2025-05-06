@@ -64,11 +64,20 @@ jobs:
         name: Build PHP for ${{ matrix.config.os_display_name }}
         run: ./ci/build-php-${{ matrix.config.os_type }}.sh
 
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Sign PHP build
+        run: gpg --detach-sign ./build/output/php-${{ matrix.config.os_type }}.zip
+
       - name: Archive PHP build for ${{ matrix.config.os_display_name }}
         uses: actions/upload-artifact@v4
         with:
           name: php-${{ matrix.config.os_type }}
-          path: ./build/output/php-${{ matrix.config.os_type }}.zip
+          path: ./build/output/php-${{ matrix.config.os_type }}.*
 
   release:
     needs: build
@@ -96,9 +105,9 @@ jobs:
         with:
           path: ./build/artifacts
 
-      - name: Upload all PHP builds to release
+      - name: Upload all PHP builds and signatures to release
         run: |
-          gh release upload ${{ env.RELEASE }} ./build/artifacts/**/php-*.zip
+          gh release upload ${{ env.RELEASE }} ./build/artifacts/**/php-*.*
 
       - name: Generate installer patch template
         run: ./ci/generate-installer-patch.sh > ./templates/install-phpw.patch
