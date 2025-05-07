@@ -73,6 +73,17 @@ jobs:
       - name: Sign PHP build
         run: gpg --detach-sign ./build/output/php-${{ matrix.config.os_type }}.zip
 
+      - if: matrix.config.os_type == 'macos'
+        name: Install coreutils for macOS
+        run: brew install coreutils
+
+      - name: Hash PHP build
+        run: |
+          cat ./build/output/php-${{ matrix.config.os_type }}.zip \
+            | sha256sum \
+            | cut -d" " -f1 \
+            > ./build/output/php-${{ matrix.config.os_type }}.zip.sha256
+
       - name: Archive PHP build for ${{ matrix.config.os_display_name }}
         uses: actions/upload-artifact@v4
         with:
